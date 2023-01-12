@@ -134,6 +134,12 @@ camerasSelect.addEventListener("input", handleCameraChange)
 welcomeForm.addEventListener("submit", handleWelcomSubmit)
 
 socket.on("welcome", async () => {
+    myDataChannel = myPeerConnection.createDataChannel("chat") // 20
+    myDataChannel.addEventListener("message", (data) => { // 21
+        console.log(data)
+    })
+    console.log("create data channel")
+
     // 아래의 offer 가 A 가 다른 브라우저가 참가할 수 있도록 초대장을 만들고 있다고 생각하면 된다.
     // 이 이벤트는 A 가 받는다. A 가 먼저 room 에 들어가있고 이후에 B 가 room 에 들어오면서
     // 이 이벤트가 호출 되기 때문에 room 에 먼저 들어간 이가 A 가 되고 해당 A 가 아래 코드를 실행시킨다.
@@ -147,7 +153,18 @@ socket.on("welcome", async () => {
     socket.emit("offer", offer, roomName) // 6 -> server.js 에서 room 에 해당 offer 을 전송한다.
 })
 
+// dataChannel 을 통해서 데이터를 보내려면
+// myDataChannel.send("hello") 하면
+// console.log(data) 에서 data.data 에 위의 "hello" 가 전달된다.
+
 socket.on("offer", async (offer) => {
+    myPeerConnection.addEventListener("datachannel", (data) => { // 22
+        myDataChannel = data.channel
+        myDataChannel.addEventListener("message", (data) => { // 23
+            console.log(data)
+        })
+    })
+
     // 이 이벤트는 B 가 받는다. B 가 들어와있는 room 으로 socket 을 통해 offer 을 emit 하였기 때문이다.
     console.log("recive offer")
     myPeerConnection.setRemoteDescription(offer) // 7
@@ -211,8 +228,16 @@ https://miro.medium.com/max/800/1*hQHzaT-JB1Wx3y0qtQX8Kw.png
 // 구글에서 제공하는 예시 STUN 서버가 아닌 직접 서버를 구현해야한다.
 18. Use STUN Server From Google -> 18
 
+-- Data Channel --
+데이터 채널을 설정하려면 offer 전송 전에 data channel 을 만든다.
+19. data channel 변수 생성 -> 19
+20. data channel 생성 - A -> 20
+21. data channel 데이터 받는 이벤트 생성 - A -> 21
+22. data channel 를 받는 이벤트 생성 - B -> 22
+23. data channel 의 데이터를 받는 이벤트 생성 -B -> 23
 */
 let myPeerConnection
+let myDataChannel // 19
 
 function makeConnection() {
     // Create Peer Connection
