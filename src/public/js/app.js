@@ -204,14 +204,34 @@ https://miro.medium.com/max/800/1*hQHzaT-JB1Wx3y0qtQX8Kw.png
 16. 기타 버그 수정를 위해 : RTCPeerConnection.getSenders() // 이를 통해서 senders(tracks, iceCandidate 등 정보 포함)을 가져온다. -> 16
 * sender 는 peer 로 보내진 media stream track 을 컨트롤한다.
 17. RTCRtpSender.replaceTrack() 을 통해서 Track 을 변경한다. -> 17
+
+-- STUN 서버를 설정한다. --
+// STUN 서버는 공용 IP 값을 찾아 주는 역할을 한다. (같은 네트워크가 아니면 P2P Connection 이 이루어지지 않는다.)
+// 예시가 아닌 실제로 서비스를 다룬다면 아래와 같이
+// 구글에서 제공하는 예시 STUN 서버가 아닌 직접 서버를 구현해야한다.
+18. Use STUN Server From Google -> 18
+
 */
 let myPeerConnection
 
 function makeConnection() {
     // Create Peer Connection
-    myPeerConnection = new RTCPeerConnection() // 2
+    // myPeerConnection = new RTCPeerConnection() // 2
+    myPeerConnection = new RTCPeerConnection({
+        iceServers: [{
+            urls: [
+                "stun:stun.l.google.com:19302",
+                "stun:stun1.l.google.com:19302",
+                "stun:stun2.l.google.com:19302",
+                "stun:stun3.l.google.com:19302",
+                "stun:stun4.l.google.com:19302",
+            ]
+        }]
+    }) // 2, 18
+
     myPeerConnection.addEventListener("icecandidate", handleIce) // 11
     myPeerConnection.addEventListener("addstream", handleAddStream) // 14
+    // myPeerConnection.addEventListener("track", handleTrack) // 14
 
     // Input Stream Data(Track) into Peer
     // Add Stream 대신에 Add Track 을 통해서 추가함.
@@ -240,4 +260,10 @@ function handleAddStream(data) {
 
     const peersStream = document.getElementById("peerFace")
     peersStream.srcObject = data.stream
+}
+
+function handleTrack(data) {
+    console.log("handle track")
+    const peerFace = document.querySelector("#peerFace")
+    peerFace.srcObject = data.stream
 }
